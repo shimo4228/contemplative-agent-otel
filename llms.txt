@@ -1,0 +1,20 @@
+# contemplative-agent-otel
+
+> Offline converter from contemplative-agent's replayable audit JSONL logs (ADR-0075) to OpenTelemetry OTLP traces with GenAI semantic conventions (Development status). Zero runtime coupling: reads log files only, never instruments or imports the main repository, which keeps its requests+numpy dependency floor.
+
+Key facts:
+- The main repository rejected runtime OpenTelemetry (ADR-0075): single local process, minimal dependencies, research-grade offline replay as the primary observability requirement.
+- This sibling connects the existing logs to the OTel ecosystem after the fact: JSONL → OTLP/HTTP (:4318) or OTLP/JSON file.
+- Untrusted content (CAPTCHA challenge bodies, server response bodies) is dropped at parse time; only hashes and categorical error classes reach span attributes. Enforced by a regression test.
+- Traces are reconstructed by time-gap clustering (no run ID in the logs); root spans are marked ca.convert.grouping="time-gap" to distinguish reconstruction from measurement.
+- LLM calls map to gen_ai.* attributes (operation text_completion, provider ollama); API calls to http.* / url.template; duration-less records become zero-width spans.
+
+## Docs
+
+- [README.md](README.md): usage, Jaeger v2 native-binary viewer setup, trace anatomy
+- [docs/mapping.md](docs/mapping.md): canonical field-by-field mapping table and exclusion rationale
+
+## Related
+
+- [Main project](https://github.com/shimo4228/contemplative-agent): the agent whose logs this converts
+- [ADR-0075](https://github.com/shimo4228/contemplative-agent/blob/main/docs/adr/0075-observability-by-default.md): observability-by-default — replayable audit logs ship with the feature

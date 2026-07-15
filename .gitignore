@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+
+# Tooling
+.pytest_cache/
+.ruff_cache/
+uv.lock
+
+# Local artifacts (converted OTLP JSON dumps, screenshots in progress)
+out/
+*.otlp.json
+
+# OS
+.DS_Store

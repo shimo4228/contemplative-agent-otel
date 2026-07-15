@@ -1,0 +1,59 @@
+[project]
+name = "contemplative-agent-otel"
+version = "0.1.0"
+description = "Offline converter from contemplative-agent's replayable audit JSONL logs (ADR-0075) to OpenTelemetry OTLP traces with GenAI semantic conventions. Reads log files only — no runtime instrumentation, no code dependency on the main repository."
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Tatsuya Shimomoto"},
+]
+keywords = [
+    "contemplative-agent", "opentelemetry", "otlp", "genai-semconv",
+    "observability", "audit-log", "ai-agent", "local-llm",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: System :: Monitoring",
+]
+# Deliberately NOT depending on contemplative-agent: this converter reads its
+# JSONL audit logs from disk (MOLTBOOK_HOME/logs/) and never imports its code.
+# Zero code coupling is the point — the main repository stays unmodified and
+# keeps its requests+numpy dependency floor (ADR-0075 rejected runtime OTel).
+#
+# otlp-proto-http over grpc: the http/protobuf exporter rides on requests and
+# avoids the native grpcio wheel; every local viewer used here accepts :4318.
+dependencies = [
+    "opentelemetry-sdk>=1.27",
+    "opentelemetry-exporter-otlp-proto-http>=1.27",
+]
+
+[project.urls]
+Homepage = "https://github.com/shimo4228/contemplative-agent-otel"
+Repository = "https://github.com/shimo4228/contemplative-agent-otel"
+"Main project" = "https://github.com/shimo4228/contemplative-agent"
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+
+[project.scripts]
+contemplative-agent-otel = "contemplative_agent_otel.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/contemplative_agent_otel"]
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = ["--strict-markers"]

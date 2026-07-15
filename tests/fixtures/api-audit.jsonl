@@ -1,0 +1,5 @@
+{"ts": "2026-01-01T00:00:30+00:00", "method": "GET", "endpoint": "GET /feed", "status": 200, "rate_remaining": 29, "keys": ["feed_filter", "posts", "success"], "success": true}
+{"ts": "2026-01-01T00:01:20+00:00", "method": "POST", "endpoint": "POST /comments", "status": 200, "rate_remaining": 12, "keys": ["success"], "success": false, "soft_fail": true, "error": "synthetic server-provided failure text that must not leak", "content_status": {"is_spam": false, "requires_review": true, "note": "synthetic untrusted note that must not leak"}}
+{"ts": "2026-01-01T00:02:10+00:00", "method": "GET", "endpoint": "GET /posts/{id}", "status": null, "transport_error": "ConnectTimeout", "error": "synthetic transport detail that must not leak"}
+{"ts": "2026-01-01T00:02:40+00:00", "method": "POST", "endpoint": "POST /posts", "status": 429, "retried": true, "retry_attempt": 1, "retry_max": 3, "retry_after_s": 30.0}
+{"ts": "2026-01-01T02:01:00+00:00", "method": "GET", "endpoint": "GET /notifications", "status": 500, "rate_remaining": 28, "keys": [], "success": false, "error": "API error 500: synthetic body that must not leak", "drift_missing": ["success"]}
