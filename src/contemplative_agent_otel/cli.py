@@ -89,7 +89,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     total = 0
     for exporter in exporters:
-        provider = build_provider(exporter)
+        provider = build_provider(exporter, expected_spans=int(summary["spans"]))
         total = emit_runs(runs, provider.get_tracer("contemplative-agent-otel"), args.gap_seconds)
         provider.force_flush()
         provider.shutdown()

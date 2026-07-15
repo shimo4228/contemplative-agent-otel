@@ -83,3 +83,42 @@ def test_otlp_json_file_exporter_writes_valid_otlp_json(fixture_dir, tmp_path) -
     rendered = json.dumps(payload)
     assert "c3ludGhldGljIGNoYWxsZW5nZTogdHdvIHBsdXMgdHdv" not in rendered
     assert "must not leak" not in rendered
+
+
+def test_bulk_emission_does_not_drop_spans(fixture_dir) -> None:
+    """Regression: an incident day produced 31k spans and overflowed the SDK
+    default batch queue (2048), silently dropping spans. The queue must be
+    sized to the conversion so every record survives."""
+    from datetime import datetime, timedelta, timezone
+
+    from contemplative_agent_otel.grouping import Run
+    from contemplative_agent_otel.records import ApiCall
+
+    base = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    records = tuple(
+        ApiCall(
+            ts=base + timedelta(milliseconds=i),
+            method="GET",
+            endpoint="GET /feed",
+            status=200,
+            rate_remaining=None,
+            success=True,
+            soft_fail=None,
+            drift_missing=(),
+            transport_error=None,
+            retried=None,
+            retry_attempt=None,
+            retry_max=None,
+            retry_after_s=None,
+            content_status={},
+        )
+        for i in range(5000)
+    )
+    run = Run(start_ns=records[0].start_ns, end_ns=records[-1].end_ns, records=records)
+
+    exporter = InMemorySpanExporter()
+    provider = build_provider(exporter, expected_spans=5001)
+    emit_runs([run], provider.get_tracer("test"), gap_s=300.0)
+    provider.force_flush()
+    provider.shutdown()
+    assert len(exporter.get_finished_spans()) == 5001

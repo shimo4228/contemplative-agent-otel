@@ -62,7 +62,29 @@ open http://localhost:16686
 Alternative: [otel-desktop-viewer](https://github.com/CtrlSpice/otel-desktop-viewer)
 also works unchanged (it listens on the same OTLP ports).
 
-<!-- screenshots: added after live verification -->
+### Screenshots (real audit logs, converted offline)
+
+A normal day — one `agent run` root span, LLM calls with real durations,
+zero-width API/verification markers:
+
+![agent run waterfall](docs/images/jaeger-run-waterfall.png)
+
+A `text_completion` span with GenAI semconv attributes (`gen_ai.usage.*`,
+`gen_ai.response.finish_reasons`) alongside the replay-specific
+`ca.audit.*` namespace:
+
+![span detail with gen_ai attributes](docs/images/jaeger-span-genai.png)
+
+An incident day is visible at a glance — one run ballooned to 30,442 spans
+with 33 errors (a retry storm the audit logs had already recorded):
+
+![incident day search](docs/images/jaeger-search-incident.png)
+
+A failed CAPTCHA verification shows up as paired error spans
+(`captcha solve` + `POST /verify`), with the server's response body reduced
+to `error.type` — the untrusted text never reaches the viewer:
+
+![error run](docs/images/jaeger-error-run.png)
 
 ## What a trace looks like
 

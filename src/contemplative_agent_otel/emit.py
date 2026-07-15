@@ -33,8 +33,16 @@ _KINDS = {
 def build_provider(
     exporter: SpanExporter,
     processor_cls: type = BatchSpanProcessor,
+    expected_spans: int | None = None,
 ) -> TracerProvider:
-    """Create a local (non-global) provider marked as an offline conversion."""
+    """Create a local (non-global) provider marked as an offline conversion.
+
+    ``expected_spans`` sizes the batch queue for offline bulk emission. The
+    SDK default queue (2048) silently drops spans when a converted day
+    outpaces the exporter — an incident day here produced 31k spans and
+    dropped some. An offline converter must never drop records silently,
+    so the queue is sized to hold the whole conversion.
+    """
     resource = Resource.create(
         {
             "service.name": "contemplative-agent",
@@ -43,7 +51,16 @@ def build_provider(
         }
     )
     provider = TracerProvider(resource=resource)
-    provider.add_span_processor(processor_cls(exporter))
+    if processor_cls is BatchSpanProcessor and expected_spans is not None:
+        queue_size = max(2048, expected_spans + 1024)
+        processor = BatchSpanProcessor(
+            exporter,
+            max_queue_size=queue_size,
+            max_export_batch_size=512,
+        )
+    else:
+        processor = processor_cls(exporter)
+    provider.add_span_processor(processor)
     return provider
 
 
