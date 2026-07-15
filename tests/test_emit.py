@@ -122,3 +122,26 @@ def test_bulk_emission_does_not_drop_spans(fixture_dir) -> None:
     provider.force_flush()
     provider.shutdown()
     assert len(exporter.get_finished_spans()) == 5001
+
+
+def test_run_id_grouped_run_marks_measurement_and_session(fixture_dir) -> None:
+    from dataclasses import replace
+
+    records = load_records(fixture_dir, date="2026-01-01")
+    tagged = tuple(
+        replace(r, run_id="run-A", session_id="sess-1") for r in records[:3]
+    )
+    runs = group_into_runs(tagged, gap_s=300.0)
+    assert len(runs) == 1
+
+    exporter = InMemorySpanExporter()
+    provider = build_provider(exporter, processor_cls=SimpleSpanProcessor)
+    emit_runs(runs, provider.get_tracer("test"), gap_s=300.0)
+    provider.force_flush()
+    provider.shutdown()
+
+    root = next(s for s in exporter.get_finished_spans() if s.parent is None)
+    assert root.attributes["ca.convert.grouping"] == "run-id"
+    assert root.attributes["ca.audit.run_id"] == "run-A"
+    assert root.attributes["session.id"] == "sess-1"
+    assert "ca.convert.gap_threshold_s" not in root.attributes

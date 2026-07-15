@@ -88,9 +88,12 @@ to `error.type` — the untrusted text never reaches the viewer:
 
 ## What a trace looks like
 
-Each `agent run` root span groups the records of one activity burst
-(time-gap clustering — the logs have no run ID, and the root span says so
-via `ca.convert.*` attributes). Child spans:
+Each `agent run` root span groups the records of one process execution —
+by the `run_id` the logs carry (stamped by the main repo's shared audit
+writer since 2026-07-16; `session.id` is added while an agent session is
+active), falling back to time-gap clustering for older records without the
+field. The root span's `ca.convert.grouping` attribute says which kind you
+are looking at. Child spans:
 
 | span | source log | semconv |
 |---|---|---|

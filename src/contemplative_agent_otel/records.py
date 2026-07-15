@@ -73,6 +73,8 @@ class LlmCall:
     system_chars: Optional[int]
     prompt_sha256: Optional[str]
     error_kind: Optional[str]
+    run_id: Optional[str] = None
+    session_id: Optional[str] = None
 
     @property
     def start_ns(self) -> int:
@@ -98,6 +100,8 @@ class VerificationEvent:
     solve_success: Optional[bool]
     verify_success: Optional[bool]
     error_status: Optional[str]  # categorical only; raw error body is dropped
+    run_id: Optional[str] = None
+    session_id: Optional[str] = None
 
     @property
     def start_ns(self) -> int:
@@ -124,6 +128,8 @@ class ApiCall:
     retry_max: Optional[int]
     retry_after_s: Optional[float]
     content_status: dict[str, Union[bool, int, float]]
+    run_id: Optional[str] = None
+    session_id: Optional[str] = None
 
     @property
     def start_ns(self) -> int:
@@ -168,6 +174,12 @@ def _opt_str(value: Any) -> Optional[str]:
     return value if isinstance(value, str) else None
 
 
+def _opt_id(value: Any) -> Optional[str]:
+    """Like _opt_str but treats "" as absent — a malformed/empty execution id
+    must fall back to time-gap grouping, never form a synthetic merged run."""
+    return value if isinstance(value, str) and value else None
+
+
 def _opt_bool(value: Any) -> Optional[bool]:
     return value if isinstance(value, bool) else None
 
@@ -194,6 +206,8 @@ def _llm_call(obj: dict[str, Any]) -> Optional[LlmCall]:
         system_chars=_opt_int(obj.get("system_chars")),
         prompt_sha256=_opt_str(obj.get("prompt_sha256")),
         error_kind=_opt_str(obj.get("error_kind")),
+        run_id=_opt_id(obj.get("run_id")),
+        session_id=_opt_id(obj.get("session_id")),
     )
 
 
@@ -217,6 +231,8 @@ def _verification_event(obj: dict[str, Any]) -> Optional[VerificationEvent]:
             solver_path=obj.get("solver_path"),
             answer=obj.get("answer"),
         ),
+        run_id=_opt_id(obj.get("run_id")),
+        session_id=_opt_id(obj.get("session_id")),
     )
 
 
@@ -251,6 +267,8 @@ def _api_call(obj: dict[str, Any]) -> Optional[ApiCall]:
         retry_max=_opt_int(obj.get("retry_max")),
         retry_after_s=_opt_float(obj.get("retry_after_s")),
         content_status=_content_status(obj.get("content_status")),
+        run_id=_opt_id(obj.get("run_id")),
+        session_id=_opt_id(obj.get("session_id")),
     )
 
 

@@ -71,16 +71,27 @@ def emit_runs(runs: Sequence[Run], tracer: Tracer, gap_s: float) -> int:
     """
     emitted = 0
     for run in runs:
+        # "run-id" grouping is measurement (the logs carry the id);
+        # "time-gap" is reconstruction — the attribute says which.
+        attributes: dict[str, str | int | float] = {
+            "ca.convert.grouping": run.grouping,
+            "ca.convert.record_count": len(run.records),
+        }
+        if run.grouping == "time-gap":
+            attributes["ca.convert.gap_threshold_s"] = gap_s
+        else:
+            run_id = next((r.run_id for r in run.records if r.run_id), None)
+            if run_id is not None:
+                attributes["ca.audit.run_id"] = run_id
+        session_ids = {r.session_id for r in run.records if r.session_id is not None}
+        if len(session_ids) == 1:
+            attributes["session.id"] = next(iter(session_ids))  # general semconv
+
         root = tracer.start_span(
             "agent run",
             kind=SpanKind.INTERNAL,
             start_time=run.start_ns,
-            attributes={
-                # Grouping is a reconstruction (no run id in the logs) — say so.
-                "ca.convert.grouping": "time-gap",
-                "ca.convert.gap_threshold_s": gap_s,
-                "ca.convert.record_count": len(run.records),
-            },
+            attributes=attributes,
         )
         parent_ctx = set_span_in_context(root)
         for record in run.records:

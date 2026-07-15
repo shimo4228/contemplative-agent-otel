@@ -93,11 +93,23 @@ retention choices.
 `logger.warning` lines, not JSONL records — they have no per-event structure
 to convert and are out of scope here.
 
-## Trace grouping caveat
+## Execution identity (all three logs)
 
-The logs carry no run/session ID. Traces are reconstructed by time-gap
-clustering (default 300 s of silence starts a new `agent run` root span),
-which matches the agent's launchd cadence but is inference, not ground
-truth. Every root span carries `ca.convert.grouping = "time-gap"` and
-`ca.convert.gap_threshold_s` so a reader can tell reconstruction from
+Since 2026-07-16 the main repository stamps every audit record in its shared
+writer (`append_jsonl_restricted`) with:
+
+| field | OTel mapping | meaning |
+|---|---|---|
+| `run_id` | trace grouping key; surfaced as `ca.audit.run_id` on the root span | one per process execution (any CLI command) |
+| `session_id` | `session.id` (general semconv) on the root span | present only while an autonomous agent session (`run`) is active |
+
+## Trace grouping
+
+Preferred: group by `run_id` — that is measurement (`ca.convert.grouping =
+"run-id"`). Records without the field (logs written before it existed) fall
+back to time-gap clustering (default 300 s of silence starts a new
+`agent run` root span), which matches the agent's launchd cadence but is
+inference, not ground truth — those roots carry `ca.convert.grouping =
+"time-gap"` and `ca.convert.gap_threshold_s`. A mixed corpus yields both
+kinds side by side, so a reader can always tell reconstruction from
 measurement.
