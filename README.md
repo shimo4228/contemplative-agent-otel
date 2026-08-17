@@ -105,6 +105,15 @@ LLM spans carry real durations (`ts` + `duration_ms`); verification and API
 records carry no duration in the log and become zero-width markers — an
 honest artifact of converting audit records rather than instrumenting.
 
+Known limitation: `load_records` (`src/contemplative_agent_otel/records.py`,
+lines 275-295) feeds every `llm-calls-*.jsonl` row to `_llm_call` with no
+discriminator, so `caller="embed"` rows (emitted by the main repo since
+T-OBS-EMB) are misread as `text_completion` spans and their `batch_size` /
+`input_chars` / `rows` fields are dropped — only `ca.caller` survives to tell
+them apart. If the exporter graduates to routine use, embed rows should
+become `embeddings {model}` spans with `gen_ai.operation.name = "embeddings"`
+(CA `T-OTEL-EMBED-ROWS`, decided 2026-08-17).
+
 ## Tests
 
 ```bash
