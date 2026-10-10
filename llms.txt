@@ -6,8 +6,10 @@ Key facts:
 - The main repository rejected runtime OpenTelemetry (ADR-0075): single local process, minimal dependencies, research-grade offline replay as the primary observability requirement.
 - This sibling connects the existing logs to the OTel ecosystem after the fact: JSONL → OTLP/HTTP (:4318) or OTLP/JSON file.
 - Untrusted content (CAPTCHA challenge bodies, server response bodies) is dropped at parse time; only hashes and categorical error classes reach span attributes. Enforced by a regression test.
-- Traces are reconstructed by time-gap clustering (no run ID in the logs); root spans are marked ca.convert.grouping="time-gap" to distinguish reconstruction from measurement.
+- Traces are grouped into agent run root spans by the logs' run_id (stamped since 2026-07-16), with time-gap clustering as the fallback for older records; ca.convert.grouping on the root span says which was used.
 - LLM calls map to gen_ai.* attributes (operation text_completion, provider ollama); API calls to http.* / url.template; duration-less records become zero-width spans.
+- Known limitation: embedding rows (caller="embed") in llm-calls-*.jsonl are read as text_completion spans, without their batch_size / input_chars / rows fields; ca.audit.caller and the embedding model in the span name and gen_ai.request.model tell them apart.
+- Status: maintained by hand by one author, separately from the main repository; not on PyPI (installed from source); not yet in the author's routine use.
 
 ## Docs
 
@@ -18,3 +20,4 @@ Key facts:
 
 - [Main project](https://github.com/shimo4228/contemplative-agent): the agent whose logs this converts
 - [ADR-0075](https://github.com/shimo4228/contemplative-agent/blob/main/docs/adr/0075-observability-by-default.md): observability-by-default — replayable audit logs ship with the feature
+- [shimo4228](https://github.com/shimo4228/shimo4228): the author's hub, with Contemplative Agent next to the author's other long-running projects and their concept DOIs
