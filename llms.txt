@@ -15,7 +15,7 @@ Key facts:
 ## Docs
 
 - [README.md](README.md): usage, Jaeger v2 native-binary viewer setup, trace anatomy
-- [docs/mapping.md](docs/mapping.md): field mapping as of the v2.10.0 schema (the canonical table is the main repository's docs/otel-semconv-mapping.md)
+- [docs/mapping.md](docs/mapping.md): field mapping as of the v2.10.0 schema (the main repository's docs/otel-semconv-mapping.md is canonical for the llm-calls rows only; verification and api rows are mapped only here)
 
 ## Related
 

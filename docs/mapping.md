@@ -1,10 +1,12 @@
 # Audit-log → OTel semantic-conventions mapping
 
-> **Frozen with this package (as of contemplative-agent v2.13.0).** The canonical
-> mapping now lives in the main repository's
-> [`docs/otel-semconv-mapping.md`](https://github.com/shimo4228/contemplative-agent/blob/main/docs/otel-semconv-mapping.md),
-> which also covers the embedding and decision row kinds. This copy documents
-> what the frozen converter does (the v2.10.0 schema).
+> **Frozen with this package (as of contemplative-agent v2.13.0).** The main
+> repository's
+> [`docs/otel-semconv-mapping.md`](https://github.com/shimo4228/contemplative-agent/blob/main/docs/otel-semconv-mapping.md)
+> is canonical for the `llm-calls` rows only (including the embedding and
+> decision row kinds). The verification-audit and api-audit rows and the
+> exclusion list exist only in this copy, which documents what the frozen
+> converter does (the v2.10.0 schema).
 
 Field-by-field mapping from contemplative-agent's replayable audit
 JSONL logs ([ADR-0075](https://github.com/shimo4228/contemplative-agent/blob/main/docs/adr/0075-observability-by-default.md))
