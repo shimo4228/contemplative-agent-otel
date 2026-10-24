@@ -8,13 +8,14 @@ Key facts:
 - Untrusted content (CAPTCHA challenge bodies, server response bodies) is dropped at parse time; only hashes and categorical error classes reach span attributes. Enforced by a regression test.
 - Traces are grouped into agent run root spans by the logs' run_id (stamped since 2026-07-16), with time-gap clustering as the fallback for older records; ca.convert.grouping on the root span says which was used.
 - LLM calls map to gen_ai.* attributes (operation text_completion, provider ollama); API calls to http.* / url.template; duration-less records become zero-width spans.
-- Known limitation: embedding rows (caller="embed") in llm-calls-*.jsonl are read as text_completion spans, without their batch_size / input_chars / rows fields; ca.audit.caller and the embedding model in the span name and gen_ai.request.model tell them apart.
-- Status: maintained by hand by one author, separately from the main repository; not on PyPI (installed from source); not yet in the author's routine use.
+- Known limitation (frozen): embedding and decision rows in llm-calls-*.jsonl are read as text_completion spans, without their batch_size / input_chars / rows / question_count fields; ca.audit.caller and the model in the span name tell them apart.
+- Status: Frozen as of contemplative-agent v2.13.0; converts the v2.10.0 schema (generation rows + verification + api); newer row kinds (embed, decision) are exported as text_completion. Not on PyPI (installed from source). Canonical field mapping: the main repository's docs/otel-semconv-mapping.md.
+- Off-host export: the exporter record carries only hashes, counts, endpoint/caller names and categorical codes; no prompt, completion or response body (pinned by tests/test_records_no_body_fields.py).
 
 ## Docs
 
 - [README.md](README.md): usage, Jaeger v2 native-binary viewer setup, trace anatomy
-- [docs/mapping.md](docs/mapping.md): canonical field-by-field mapping table and exclusion rationale
+- [docs/mapping.md](docs/mapping.md): field mapping as of the v2.10.0 schema (the canonical table is the main repository's docs/otel-semconv-mapping.md)
 
 ## Related
 

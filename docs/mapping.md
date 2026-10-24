@@ -1,6 +1,12 @@
 # Audit-log → OTel semantic-conventions mapping
 
-Canonical field-by-field mapping from contemplative-agent's replayable audit
+> **Frozen with this package (as of contemplative-agent v2.13.0).** The canonical
+> mapping now lives in the main repository's
+> [`docs/otel-semconv-mapping.md`](https://github.com/shimo4228/contemplative-agent/blob/main/docs/otel-semconv-mapping.md),
+> which also covers the embedding and decision row kinds. This copy documents
+> what the frozen converter does (the v2.10.0 schema).
+
+Field-by-field mapping from contemplative-agent's replayable audit
 JSONL logs ([ADR-0075](https://github.com/shimo4228/contemplative-agent/blob/main/docs/adr/0075-observability-by-default.md))
 to OpenTelemetry span attributes. `tests/test_mapping.py` asserts that
 `src/contemplative_agent_otel/mapping.py` and this table stay in sync.

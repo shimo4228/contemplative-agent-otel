@@ -1,5 +1,8 @@
 # contemplative-agent-otel
 
+> **Status: Frozen as of contemplative-agent v2.13.0.** Converts the v2.10.0 schema (generation rows + verification + api). Newer row kinds (embed, decision) are exported as text_completion. If you send traces off-host, only hashes and categorical codes leave (see below); check that before pointing `--endpoint` at a remote collector. The canonical field mapping lives in the core repository's `docs/otel-semconv-mapping.md`. Run `pip-audit` on the dependencies before using it. (Decision D-P1-11-3 = B, owner, 2026-10-24.)
+
+
 Offline converter from [contemplative-agent](https://github.com/shimo4228/contemplative-agent)'s
 replayable audit JSONL logs to OpenTelemetry OTLP traces, so you can open the
 agent's past runs in a trace viewer such as Jaeger. It is for people who run
@@ -33,6 +36,13 @@ Jaeger it stands out at a glance:
 completion text, challenge bodies or server response bodies, only counts,
 hashes and error classes. See [docs/mapping.md](docs/mapping.md) for the full
 field-by-field table and exclusion rationale.
+
+**Off-host export.** The exporter only ever sees the parsed records, and
+those have no prompt, completion, challenge or response-body field, only hashes,
+counts, endpoint and caller names and categorical codes
+(`tests/test_records_no_body_fields.py` pins the field names). If you send
+traces off-host with `--endpoint`, check that this metadata-only content is
+acceptable; the converter puts no restriction on the endpoint host.
 
 Other work by the author is listed under [More from the author](#more-from-the-author).
 
@@ -171,7 +181,7 @@ contemplative-agent-otel is an offline command-line converter that turns the con
 
 It exists because the core agent deliberately ships no OpenTelemetry at runtime (ADR-0075: one local process, a `requests`+`numpy` dependency floor, and append-only audit logs designed for offline research replay rather than operational tracing). This converter connects those logs to the OTel ecosystem after the fact, without changing the core.
 
-Canonical facts: MIT license; Python 3.10 or later, built with hatchling; depends on `opentelemetry-sdk` and `opentelemetry-exporter-otlp-proto-http` (HTTP/protobuf, no gRPC); maintained by hand by one author (@shimo4228), separately from the core; not on PyPI, installed from source. Status: not yet in the author's routine use. No API key. Input: `llm-calls-{date}.jsonl`, `api-audit.jsonl` and `verification-audit.jsonl` under `~/.config/moltbook/logs` by default. Output: OTLP/HTTP to `http://localhost:4318` by default, or an OTLP/JSON file with `--to-file`; nothing is sent elsewhere unless `--endpoint` names another collector. Traces are grouped into `agent run` root spans by the logs' `run_id`, with time-gap clustering (`--gap-seconds`, default 300) as the fallback for older records; `ca.convert.grouping` records which was used. LLM calls become `text_completion {model}` spans with `gen_ai.*` attributes, API calls become `http.*` spans, and CAPTCHA verifications become `captcha solve` spans with `error.type`; challenge bodies and server response bodies are dropped at parse time, enforced by a regression test. The GenAI conventions are in Development status upstream; attribute names are pinned as of 2026-07 in `docs/mapping.md`. Known limitation: embedding rows in `llm-calls-*.jsonl` are currently misread as `text_completion` spans, told apart by `ca.audit.caller` and by the embedding model in the span name and `gen_ai.request.model`; if the exporter graduates to routine use, they are to become `embeddings {model}` spans with `gen_ai.operation.name = "embeddings"`.
+Canonical facts: MIT license; Python 3.10 or later, built with hatchling; depends on `opentelemetry-sdk` and `opentelemetry-exporter-otlp-proto-http` (HTTP/protobuf, no gRPC); not on PyPI, installed from source. Status: Frozen as of contemplative-agent v2.13.0; converts the v2.10.0 schema, newer row kinds are exported as text_completion. No API key. Input: `llm-calls-{date}.jsonl`, `api-audit.jsonl` and `verification-audit.jsonl` under `~/.config/moltbook/logs` by default. Output: OTLP/HTTP to `http://localhost:4318` by default, or an OTLP/JSON file with `--to-file`; nothing is sent elsewhere unless `--endpoint` names another collector. Traces are grouped into `agent run` root spans by the logs' `run_id`, with time-gap clustering (`--gap-seconds`, default 300) as the fallback for older records; `ca.convert.grouping` records which was used. LLM calls become `text_completion {model}` spans with `gen_ai.*` attributes, API calls become `http.*` spans, and CAPTCHA verifications become `captcha solve` spans with `error.type`; challenge bodies and server response bodies are dropped at parse time, enforced by a regression test. The GenAI conventions are in Development status upstream; attribute names are pinned as of 2026-07 in `docs/mapping.md`. Known limitation: embedding rows in `llm-calls-*.jsonl` are currently misread as `text_completion` spans, told apart by `ca.audit.caller` and by the embedding model in the span name and `gen_ai.request.model`; if the exporter graduates to routine use, they are to become `embeddings {model}` spans with `gen_ai.operation.name = "embeddings"`.
 
 Example: `contemplative-agent-otel --log-dir tests/fixtures --dry-run` on the bundled synthetic logs prints `{"by_type": {"ApiCall": 5, "LlmCall": 5, "VerificationEvent": 3}, "records": 13, "runs": 2, "spans": 15}` and emits nothing; on the author's real logs, an incident day showed one run of 30,442 spans with 33 errors, a retry storm the audit logs had already recorded, against 72 to 151 spans for the next-largest runs in the same Jaeger search.
 
